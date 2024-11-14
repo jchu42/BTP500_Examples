@@ -88,7 +88,7 @@ class Graph:
 
     # Creates a minimum spanning tree using (kind of) kurskal's algorithm
     def MST(self):
-        # Sorting the edges by weight
+        # Sorting the edges by weight, acts almost like a priority queue
         sorted_edges = sorted(self.edges, key=lambda tup: tup[2])
         # Marking nodes as univisted so cycles can't appear later on
         nodes = {e:0 for e in self.verticies}
@@ -101,6 +101,7 @@ class Graph:
             edge_u, edge_v = None, None
             # Search sorted_edges for a short edge connected to these edges
             for adj in range(edge, len(sorted_edges)):
+                # By virtue of these edges being sorted, we are garunteed the next shortest length
                 if sorted_edges[adj][0] == u or sorted_edges[edge][1] == u:
                     edge_u = (sorted_edges[adj] if sorted_edges[adj][0] == u else sorted_edges[edge])
                 elif sorted_edges[adj][0] == v or sorted_edges[edge][1] == v:
