@@ -12,18 +12,20 @@ https://seneca-ictoer.github.io/data-structures-and-algorithms/I-Heaps/heap-sort
 def heapify(a_node):
     '''Creates a max heapified version of a binary tree.'''
     if a_node.children:
+        
+        # Heapify all the children  
+        for child in a_node.children:
+            heapify(child)
+        
         largest_child = (max(a_node.children, key=lambda n: n.data))
         largest = (largest_child if largest_child.data > a_node.data else a_node)
 
         # If largest is not root, swap and continue heapifying
         if largest != a_node:
             # Swap data only, want to keep structure the same
-            heapify(largest) # Sift it to the top
             a_node.data, largest.data = largest.data, a_node.data
+            heapify(largest) # Ensure the heap property is kept for the sub-tree
 
-        # Ensure all children are heapified as well
-        for child in a_node.children:
-            heapify(child)
 
 
 if __name__ == "__main__":
