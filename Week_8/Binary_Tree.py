@@ -13,26 +13,25 @@ class Node:
             self.children.append(Node(data))
             self.children.sort(key=lambda n: n.data) # Just so they're in order
         else:
-            if data < self.children[0].data:
+            if data < self.data:
                 self.children[0].add_node(data)
-            elif data > self.children[1].data:
+            elif data > self.data:
                 self.children[1].add_node(data)
             else:
                 return # do nothing as the node already exists in the tree
 
-    def display(self, level=0, prefix=""):
-        # Print the current node with prefix for the connection
-        print(prefix + f"{self.data}")
-        
-        # Prepare the prefix for children
-        if self.children:
-            # Set the prefix for the first child
-            child_prefix = prefix + "    "
-            
-            # Iterate through children
-            for child in self.children:
-                child_prefix = prefix + "|  "
-                child.display(level + 1, child_prefix)
+    def print_tree(self, prefix, is_left=False):
+        '''Prints a string representation of the actual tree.'''
+        if self.data:
+            print(prefix, end="")
+            print("|__" if is_left else "|---", end="")
+            print(self.data)
+            # Enter the next tree level - left and right branch
+            if self.children:
+                self.children[0].print_tree(prefix + ("|   " if is_left else "    "), True)
+                if len(self.children) == 2:
+                    self.children[1].print_tree(prefix + ("|   " if is_left else "    "), False)
+
 
 class BinaryTree:
     def __init__(self, data):
@@ -42,7 +41,7 @@ class BinaryTree:
         self.root.add_node(data)
 
     def display(self):
-        self.root.display()
+        self.root.print_tree("")
 
     #TODO: Add height calculation
 
