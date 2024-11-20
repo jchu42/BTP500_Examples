@@ -5,7 +5,7 @@ import time
 
 allow_diagonals = True
 fps = 10
-testno = 8
+testno = 6
 def main():
     if testno == 0:
         # test sorted linked list
@@ -15,7 +15,7 @@ def main():
         ll.add_sorted(5, lambda val:val)
         ll.add_sorted(8, lambda val:val)
         ll.add_sorted(3, lambda val:val)
-        start = ll.start.next
+        start = ll.sentinel_start.next
         while start is not None:
             print(start.data)
             start = start.next
@@ -25,7 +25,7 @@ def main():
         ll.add_sorted(5, lambda val:-val)
         ll.add_sorted(8, lambda val:-val)
         ll.add_sorted(3, lambda val:-val)
-        start = ll.start.next
+        start = ll.sentinel_start.next
         while start is not None:
             print(start.data)
             start = start.next
@@ -120,63 +120,63 @@ def main():
                  ]
         astar = AStar(world)
         astar.pathfind('d', 'c')
-    elif testno == 8:
-        world = ["                                                                                  ",
-                 "  #           #  ######  ######   #     #       ###     ###      ###    #         ",
-                 "   #         #   #       #     #   #   #       #   #   #   #    #   #   #         ",
-                 "    #       #    #       #    #     # #       #       #     #  #     #  #         ",
-                 "  a  #     #     ####    #####       #        #       #     #  #     #  #   b     ", # move 'b' one space to the left, and it'll get a whooole lot slower
-                 "      #   #      #       #   #       #        #       #     #  #     #  #         ",
-                 "       # #       #       #    #      #         #   #   #   #    #   #   #         ",
-                 "        #        ######  #     #     #          ###     ###      ###    ########  ",
-                 "                                                                                  ",
-                 ]
-        astar = AStar(world)
-        astar.pathfind('a', 'b')
 
 class Node:
-    def __init__(self, data, next=None):
+    def __init__(self, data, cost, next=None):
         self.data = data
+        self.cost = cost
         self.next = next
 class LinkedList:
-    def __init__(self):
-        self.start = Node(None) # sentinel
+    """Uses sorting_function on data to calculate cost. 
+    Keeps list sorted in ascending cost. 
+    """
+    def __init__(self, sorting_function):
+        self.sentinel_start = Node(None, None)
         self.size = 0
-    def add_sorted(self, data, func):
+        self.sorting_function = sorting_function
+    def add_sorted(self, data):
         self.size += 1
-        prev = self.start
+        prev = self.sentinel_start
         cur = prev.next
-        cost = func(data)
-        while cur is not None and cur.data[1] < cost:
+        cost = self.sorting_function(data)
+        while cur is not None and cur.cost < cost:
             prev = cur
             cur = cur.next
-        prev.next = Node((data, cost), cur) # hehehehehehe
+        prev.next = Node(data, cost, cur)
     def pop_front(self):
-        if self.start.next is None:
+        if self.sentinel_start.next is None:
             raise Exception("Tried to pop empty list!")
         self.size -= 1
-        to_return = self.start.next.data
-        self.start.next = self.start.next.next
-        return to_return[0]
+        to_return = self.sentinel_start.next.data
+        self.sentinel_start.next = self.sentinel_start.next.next
+        return to_return
     def peek_front(self):
         if self.size == 0:
             return None
-        return self.start.next.data[0]
+        return self.sentinel_start.next.data
+
+class Data:
+    def __init__(self, cur_pos, cost_so_far, path):
+        self.cur_pos = cur_pos
+        self.cost_so_far=cost_so_far
+        self.path = path
 
 class AStar:
     def __init__(self, world):
         self.world = world
     def get_heuristic_estimate(self, endpos):
-        def heuristic_estimate(pos):
+        def heuristic_estimate(data):
             if allow_diagonals:
                 # http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
                 # so I guess just having it as exact as possible is best
-                return pos[1] + max(abs(pos[0][0] - endpos[0]), abs(pos[0][1] - endpos[1]))
+                return data.cost_so_far + max(abs(data.cur_pos[0] - endpos[0]), abs(data.cur_pos[1] - endpos[1]))
             else:
-                return pos[1] + abs(pos[0][0] - endpos[0]) + abs(pos[0][1] - endpos[1])
+                return data.cost_so_far + abs(data.cur_pos[0] - endpos[0]) + abs(data.cur_pos[1] - endpos[1])
             #return pos[1] + 0.5*((pos[0][0] - endpos[0])**2 + (pos[0][1] - endpos[1])**2)**0.5
         return heuristic_estimate
+
     def pathfind(self, startchar, endchar):
+        # find start and end points
         for i in range(len(self.world)):
             for j in range(len(self.world[0])):
                 if self.world[i][j] == startchar:
@@ -186,28 +186,29 @@ class AStar:
         if startpos is None or endpos is None:
             raise Exception ("start/end positions not found")
     
+        # setup
         heuristic_estimate = self.get_heuristic_estimate(endpos)
         visited = [len(self.world[0])*[False] for _ in range(len(self.world))]
-        #actually_visited = [len(self.world[0])*[False] for _ in range(len(self.world))] # for the nice graphics
-        ll = LinkedList()
-        # tuple with tuple and g(n), where g(n) is cost from start node to current node
-        # third element of tuple is the path
-        ll.add_sorted((startpos, 0, [startpos]), heuristic_estimate) 
-        while ll.size > 0 and ll.peek_front()[0] != endpos:
+        ll = LinkedList(heuristic_estimate)
+        ll.add_sorted(Data(cur_pos=startpos, 
+                           cost_so_far=0, 
+                           path=[startpos])) 
+
+        while ll.size > 0 and ll.peek_front().cur_pos != endpos:
             # get next-lowest cost
             cur_node = ll.pop_front()
-            if visited[cur_node[0][0]][cur_node[0][1]]:
+            if visited[cur_node.cur_pos[0]][cur_node.cur_pos[1]]:
                 continue
             if fps > 0:
                 time.sleep(1/fps)
 
-            visited[cur_node[0][0]][cur_node[0][1]] = True 
+            visited[cur_node.cur_pos[0]][cur_node.cur_pos[1]] = True 
             # get connected vertices
             connected = [[0, 1], [1, 0], [0, -1], [-1, 0]]
             if allow_diagonals:
                 connected.extend ([[1, 1], [1, -1],[-1, -1], [-1, 1]])
             for dx, dy in connected:
-                next_pos = (cur_node[0][0] + dx, cur_node[0][1] + dy)
+                next_pos = (cur_node.cur_pos[0] + dx, cur_node.cur_pos[1] + dy)
                 # if in range
                 if next_pos[0] >= 0 and next_pos[0] < len(self.world) and next_pos[1] >= 0 and next_pos[1] < len(self.world[0]):
                     # and has not been visited, and the space in the world at that point is not a wall
@@ -215,7 +216,9 @@ class AStar:
                         # set as visited
                         #visited[next_pos[0]][next_pos[1]] = True
                         # add to list with heuristic function
-                        ll.add_sorted((next_pos, cur_node[1] + 1, cur_node[2] + [next_pos]), heuristic_estimate)
+                        ll.add_sorted(Data(cur_pos=next_pos, 
+                                           cost_so_far=cur_node.cost_so_far + 1, 
+                                           path=cur_node.path + [next_pos]))
 
             # print world and the resultant search space
             print("-" * len(self.world[0]))
@@ -226,7 +229,7 @@ class AStar:
                     else:
                         print(self.world[i][j], end='')
                 print()
-        path = ll.peek_front()[2]
+        path = ll.peek_front().path
         # print world and the resultant search space
         print("-" * len(self.world[0]))
         for i in range(len(self.world)):
