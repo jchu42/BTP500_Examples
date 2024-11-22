@@ -70,13 +70,13 @@ class RedBlackTree:
         parent = None
         while current:
             parent = current
-            if data < current.data:
+            if data > current.data:
                 if not current.left:
                     current.left = RedBlackTree(data)
                     current.left.parent = current
                     break
                 current = current.left
-            elif data > current.data:
+            elif data < current.data:
                 if not current.right:
                     current.right = RedBlackTree(data)
                     current.right.parent = current
