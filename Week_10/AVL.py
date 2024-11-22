@@ -145,10 +145,10 @@ class AVL_Tree:
             if self.data == data:
                 found = True
             # If the search value is larger, continue searching in the right subtree
-            elif data < self.data and self.right:
+            elif data > self.data and self.right:
                 return self.right.search(data)
             # If the search value is smaller, continue searching in the left subtree
-            elif data > self.data and self.left:
+            elif data < self.data and self.left:
                 return self.left.search(data)
         return found 
     
