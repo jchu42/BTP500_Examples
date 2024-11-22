@@ -94,27 +94,27 @@ class AVL_Tree:
         # If there is no data at the root (this is the first insertion)
         if not self.data:
             self.data = data  # Set the current node's data
-            return self
+            return
         
         # Insert data in the left subtree if the data is smaller than the current node's data
-        if data < self.data:
+        if data > self.data:
             if not self.left: 
                 self.left = AVL_Tree(data)
                 # Left insertion makes the node more left-heavy
                 self.balance -= 1  
             else:
                 # Recursively insert in the left subtree
-                self.left = self.left.insert(data)  
+                self.left.insert(data)  
 
         # Insert data in the right subtree if the data is larger than the current node's data
-        elif data > self.data:
+        elif data < self.data:
             if not self.right:
                 self.right = AVL_Tree(data)
                 # Right insertion makes the node more right-heavy
                 self.balance += 1  
             else:
                 # Recursively insert in the right subtree
-                self.right = self.right.insert(data)  
+                self.right.insert(data)  
 
         # After insertion, update the balance factor of the current node
         self.balance = self.find_balance()
@@ -122,9 +122,6 @@ class AVL_Tree:
         # Check the balance, rebalance if necessary
         if self.balance > 1 or self.balance < -1:
             self.rebalance_helper()
-        
-        # Returning self allows us to maintain the tree structure
-        return self
 
     def find_balance(self):
         '''Calculate the balance factor of the node (difference between left and right heights)'''
@@ -288,3 +285,5 @@ if __name__ == "__main__":
 
     avl.delete(3)
     avl.print_tree("")
+
+    print(f"The balance for the tree is: {avl.find_balance()}")
