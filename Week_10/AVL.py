@@ -49,17 +49,18 @@ class AVL_Tree:
         '''Perform left rotation on the current node to balance the tree'''
         # The current node's right child becomes the new root, if it exists
         if self.right:
-            temp = self.right
+            tempdata = self.right.data
+            tempbalance = self.right.balance
             self.right.data = self.data
             self.right.balance = self.balance
-            self.data = temp.data
-            self.balance = temp.balance
+            self.data = tempdata
+            self.balance = tempbalance
 
             old_right = self.right
             self.right = self.right.right
+            old_right.right = old_right.left
             old_right.left = self.left
             self.left = old_right
-            self.left.right = old_right.left
 
             
             # Update the balance factors for the current node and the new root
@@ -76,29 +77,26 @@ class AVL_Tree:
         '''Perform right rotation on the current node to balance the tree'''
         # The current node's left child becomes the new root, if it exists
         if self.left:
-            self.left, self.right = self.right, self.left
+            tempdata = self.left.data
+            tempbalance = self.left.balance
+            self.left.data = self.data
+            self.left.balance = self.balance
+            self.data = tempdata
+            self.balance = tempbalance
 
-            temp = self.right
-            self.right.data = self.data
-            self.right.balance = self.balance
-            self.data = temp.data
-            self.balance = temp.balance
-
-            old_right = self.right
-            self.right = self.right.right
-            old_right.left = self.left
-            self.left = old_right
-            self.left.right = old_right.left
+            old_left = self.left
+            self.left = self.left.left
+            old_left.left = old_left.right
+            old_left.right = self.right
+            self.right = old_left
 
             
             # Update the balance factors for the current node and the new root
             # The current node’s balance decreases by 1 (it’s shifted one level down)
-            self.left.balance = self.left.balance - 1 - max(self.balance, 0)
+            self.right.balance = self.right.balance - 1 - max(self.balance, 0)
             
             # The new root's balance factor is adjusted based on the current node’s balance
-            self.balance = self.balance - 1 + min(self.left.balance, 0)
-
-            self.left, self.right = self.right, self.left
+            self.balance = self.balance - 1 + min(self.right.balance, 0)
         
         # Return the new root of the subtree
         #return new_root
@@ -146,7 +144,7 @@ class AVL_Tree:
         right_height = self.right.find_height() if self.right else 0
         
         # Return the difference: left height - right height
-        return left_height - right_height
+        return right_height - left_height
 
     def search(self, data):
         '''Search for a value in the AVL tree'''
@@ -275,7 +273,7 @@ class AVL_Tree:
             # Print the current node’s value with its appropriate prefix
             print(prefix, end="")
             print("|__" if is_left else "|---", end="")
-            print(self.data)
+            print(self.data, self.balance)
             
             # Recursively print the left and right subtrees
             if self.left:
@@ -285,13 +283,16 @@ class AVL_Tree:
 
 
 if __name__ == "__main__":
-    avl = AVL_Tree(6)
-    avl.insert(7)
-    avl.insert(10)
-    avl.insert(1)
+    avl = AVL_Tree(1)
+    avl.insert(2)
     avl.insert(3)
-    avl.insert(-4)
-    avl.insert(19)
+    avl.insert(4)
+    avl.print_tree("")
+    avl.insert(5)
+    avl.insert(6)
+    avl.insert(7)
+    avl.insert(8)
+    avl.insert(9)
 
     avl.print_tree("")
 
