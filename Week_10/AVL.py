@@ -48,48 +48,60 @@ class AVL_Tree:
     def left_rotate(self):
         '''Perform left rotation on the current node to balance the tree'''
         # The current node's right child becomes the new root, if it exists
-        new_root = None
         if self.right:
-            new_root = self.right
-            
-            # The right child’s left subtree becomes the current node’s right child
-            self.right = new_root.left
-            
-            # The current node becomes the left child of the new root
-            new_root.left = self
+            temp = self.right
+            self.right.data = self.data
+            self.right.balance = self.balance
+            self.data = temp.data
+            self.balance = temp.balance
+
+            old_right = self.right
+            self.right = self.right.right
+            old_right.left = self.left
+            self.left = old_right
+            self.left.right = old_right.left
+
             
             # Update the balance factors for the current node and the new root
             # The current node’s balance decreases by 1 (it’s shifted one level down)
-            self.balance = self.balance - 1 - max(new_root.balance, 0)
+            self.left.balance = self.left.balance - 1 - max(self.balance, 0)
             
             # The new root's balance factor is adjusted based on the current node’s balance
-            new_root.balance = new_root.balance - 1 + min(self.balance, 0)
+            self.balance = self.balance - 1 + min(self.left.balance, 0)
         
         # Return the new root of the subtree
-        return new_root
+        #return new_root
 
     def right_rotate(self):
         '''Perform right rotation on the current node to balance the tree'''
         # The current node's left child becomes the new root, if it exists
-        new_root = None
         if self.left:
-            new_root = self.left
-            
-            # The left child’s right subtree becomes the current node’s left child
-            self.left = new_root.right
-            
-            # The current node becomes the right child of the new root
-            new_root.right = self
+            self.left, self.right = self.right, self.left
+
+            temp = self.right
+            self.right.data = self.data
+            self.right.balance = self.balance
+            self.data = temp.data
+            self.balance = temp.balance
+
+            old_right = self.right
+            self.right = self.right.right
+            old_right.left = self.left
+            self.left = old_right
+            self.left.right = old_right.left
+
             
             # Update the balance factors for the current node and the new root
-            # The current node’s balance increases by 1 (it’s shifted one level down)
-            self.balance = self.balance + 1 - min(new_root.balance, 0)
+            # The current node’s balance decreases by 1 (it’s shifted one level down)
+            self.left.balance = self.left.balance - 1 - max(self.balance, 0)
             
             # The new root's balance factor is adjusted based on the current node’s balance
-            new_root.balance = new_root.balance + 1 - max(self.balance, 0)
+            self.balance = self.balance - 1 + min(self.left.balance, 0)
+
+            self.left, self.right = self.right, self.left
         
         # Return the new root of the subtree
-        return new_root
+        #return new_root
 
     def insert(self, data):
         '''Insert a node into the AVL tree and rebalance if necessary'''
