@@ -20,24 +20,26 @@ class AVL_Tree:
         self.left = None
         self.right = None
         # Initial balance factor of the node (0 means balanced)
-        self.balance = 0 
+        self.height = 1
 
+    def calc_balance(self):
+        return (self.right.height if self.right else 0) - (self.left.height if self.left else 0)
     def rebalance_helper(self):
         '''Helper function to handle rebalancing of the tree'''
         # Left-heavy subtree (balance < -1)
-        if self.balance < -1:
+        if self.calc_balance() < -1:
             # Check for Left-Right case: If left child is right-heavy, we perform a left rotation on it first
-            if self.left and self.left.balance > 0:
+            if self.left and self.left.calc_balance() > 0:
                 # Left-rotate the left child
                 self.left.left_rotate() 
             # Perform a right rotation on the current node (this handles the Left-Left or Left-Right case)
             self.right_rotate()
 
         # Right-heavy subtree (balance > 1)
-        elif self.balance > 1:
+        elif self.calc_balance() > 1:
             # Check for Right-Left case: If right child is left-heavy, 
             # we perform a right rotation on it first
-            if self.right and self.right.balance < 0:
+            if self.right and self.right.calc_balance() < 0:
                 # Right-rotate the right child
                 self.right.right_rotate()  
             # Perform a left rotation on the current node (this handles the Right-Right or Right-Left case)
@@ -50,11 +52,11 @@ class AVL_Tree:
         # The current node's right child becomes the new root, if it exists
         if self.right:
             tempdata = self.right.data
-            tempbalance = self.right.balance
+            tempheight = self.right.height
             self.right.data = self.data
-            self.right.balance = self.balance
+            self.right.height = self.height
             self.data = tempdata
-            self.balance = tempbalance
+            self.height = tempheight
 
             old_right = self.right
             self.right = self.right.right
@@ -63,12 +65,11 @@ class AVL_Tree:
             self.left = old_right
 
             
-            # Update the balance factors for the current node and the new root
-            # The current node’s balance decreases by 1 (it’s shifted one level down)
-            self.left.balance = self.left.balance - 1 - max(self.balance, 0)
-            
-            # The new root's balance factor is adjusted based on the current node’s balance
-            self.balance = self.balance - 1 + min(self.left.balance, 0)
+            self.right.height = max(self.right.right.height if self.right.right else 0, 
+                                    self.right.left.height if self.right.left else 0) + 1
+            self.left.height = max(self.left.left.height if self.left.left else 0, 
+                                   self.left.right.height if self.left.right else 0) + 1
+            self.height = max(self.left.height, self.right.height) + 1
         
         # Return the new root of the subtree
         #return new_root
@@ -91,12 +92,11 @@ class AVL_Tree:
             self.right = old_left
 
             
-            # Update the balance factors for the current node and the new root
-            # The current node’s balance decreases by 1 (it’s shifted one level down)
-            self.right.balance = self.right.balance - 1 - max(self.balance, 0)
-            
-            # The new root's balance factor is adjusted based on the current node’s balance
-            self.balance = self.balance - 1 + min(self.right.balance, 0)
+            self.right.height = max(self.right.right.height if self.right.right else 0, 
+                                    self.right.left.height if self.right.left else 0) + 1
+            self.left.height = max(self.left.left.height if self.left.left else 0, 
+                                   self.left.right.height if self.left.right else 0) + 1
+            self.height = max(self.right.height, self.left.height) + 1
         
         # Return the new root of the subtree
         #return new_root
@@ -113,38 +113,42 @@ class AVL_Tree:
             if not self.left: 
                 self.left = AVL_Tree(data)
                 # Left insertion makes the node more left-heavy
-                self.balance -= 1  
+                #self.balance -= 1  
+                added_height = 0 if self.right else 1
             else:
                 # Recursively insert in the left subtree
-                self.left.insert(data) 
+                added_height = self.left.insert(data) 
 
         # Insert data in the right subtree if the data is larger than the current node's data
         elif data > self.data:
             if not self.right:
                 self.right = AVL_Tree(data)
                 # Right insertion makes the node more right-heavy
-                self.balance += 1  
+                #self.balance += 1  
+                added_height = 0 if self.left else 1
             else:
                 # Recursively insert in the right subtree
-                self.right.insert(data)  
+                added_height = self.right.insert(data)  
+        self.height += added_height
 
         # After insertion, update the balance factor of the current node
-        self.balance = self.find_balance()
+        #self.balance = self.find_balance()
 
         # Check the balance, rebalance if necessary
-        if self.balance > 1 or self.balance < -1:
-            self.rebalance_helper()
+        #if self.balance > 1 or self.balance < -1:
+        self.rebalance_helper()
+        return added_height
 
-    def find_balance(self):
-        '''Calculate the balance factor of the node (difference between left and right heights)'''
-        # The height of the left subtree, or 0 if there’s no left child
-        left_height = self.left.find_height() if self.left else 0
+    # def find_balance(self):
+    #     '''Calculate the balance factor of the node (difference between left and right heights)'''
+    #     # The height of the left subtree, or 0 if there’s no left child
+    #     left_height = self.left.find_height() if self.left else 0
         
-        # The height of the right subtree, or 0 if there’s no right child
-        right_height = self.right.find_height() if self.right else 0
+    #     # The height of the right subtree, or 0 if there’s no right child
+    #     right_height = self.right.find_height() if self.right else 0
         
-        # Return the difference: left height - right height
-        return right_height - left_height
+    #     # Return the difference: left height - right height
+    #     return right_height - left_height
 
     def search(self, data):
         '''Search for a value in the AVL tree'''
@@ -161,18 +165,18 @@ class AVL_Tree:
                 return self.left.search(data)
         return found 
     
-    def find_height(self):
-        '''Find the maximum depth (height) of the tree'''
-        height = 0
-        if self.data:
-            # Get the height of the left and right subtrees
-            left_height = self.left.find_height() if self.left else 0
-            right_height = self.right.find_height() if self.right else 0
+    # def find_height(self):
+    #     '''Find the maximum depth (height) of the tree'''
+    #     height = 0
+    #     if self.data:
+    #         # Get the height of the left and right subtrees
+    #         left_height = self.left.find_height() if self.left else 0
+    #         right_height = self.right.find_height() if self.right else 0
             
-            # The height of the current tree is the max of its left and right subtrees + 1
-            height = 1 + max(left_height, right_height)
+    #         # The height of the current tree is the max of its left and right subtrees + 1
+    #         height = 1 + max(left_height, right_height)
         
-        return height
+    #     return height
 
     def min_value_node(self):
         '''Return the node with the minimum value found in the tree'''
@@ -197,7 +201,7 @@ class AVL_Tree:
                 return self.left
             else:
                 # Case 2: Node has two children, get the inorder successor (smallest in the right subtree)
-                temp = self.right._min_value_node()
+                temp = self.right.min_value_node()
                 self.data = temp.data  # Copy the inorder successor's value to this node
                 self.right = self.right.delete(temp.data)  # Delete the inorder successor
         elif data < self.data:
@@ -210,7 +214,7 @@ class AVL_Tree:
             return
 
         # Step 2: Update height and balance factor of this node
-        self.balance = self.find_balance()
+        self.balance = self.calc_balance()
 
         # Step 3: Rebalance the tree if necessary
         if self.balance > 1 or self.balance < -1:
@@ -273,7 +277,7 @@ class AVL_Tree:
             # Print the current node’s value with its appropriate prefix
             print(prefix, end="")
             print("|__" if is_left else "|---", end="")
-            print(self.data, self.balance)
+            print(str(self.data) + ", h:" + str(self.height))
             
             # Recursively print the left and right subtrees
             if self.left:
@@ -296,15 +300,15 @@ if __name__ == "__main__":
 
     avl.print_tree("")
 
-    print(f"Is 10 in the our AVL Tree? {avl.search(10)}")
+    print(f"Is 7 in the our AVL Tree? {avl.search(7)}")
     print(f"Is -1 in the our AVL Tree? {avl.search(-1)}")
 
-    print(f"The height (max depth) of this tree is: {avl.find_height()}")
+    print(f"The height (max depth) of this tree is: {avl.height}")
 
-    print(f"The balance for our AVL tree is: {avl.find_balance()}")
+    print(f"The balance for our AVL tree is: {avl.calc_balance()}")
 
     print("Deleting 3...")
     avl.delete(3)
     avl.print_tree("")
 
-    print(f"The balance for the tree is: {avl.find_balance()}")
+    print(f"The balance for the tree is: {avl.calc_balance()}")
