@@ -43,6 +43,8 @@ class AVL_Tree:
             # Perform a left rotation on the current node (this handles the Right-Right or Right-Left case)
             self.left_rotate()
 
+    #----- Problems with the rotation functions ------
+
     def left_rotate(self):
         '''Perform left rotation on the current node to balance the tree'''
         # The current node's right child becomes the new root, if it exists
@@ -97,17 +99,17 @@ class AVL_Tree:
             return
         
         # Insert data in the left subtree if the data is smaller than the current node's data
-        if data > self.data:
+        if data < self.data:
             if not self.left: 
                 self.left = AVL_Tree(data)
                 # Left insertion makes the node more left-heavy
                 self.balance -= 1  
             else:
                 # Recursively insert in the left subtree
-                self.left.insert(data)  
+                self.left.insert(data) 
 
         # Insert data in the right subtree if the data is larger than the current node's data
-        elif data < self.data:
+        elif data > self.data:
             if not self.right:
                 self.right = AVL_Tree(data)
                 # Right insertion makes the node more right-heavy
@@ -173,26 +175,29 @@ class AVL_Tree:
     def delete(self, data):
         '''Delete a node from the AVL tree and rebalance if necessary'''
         if not self:
-            return self  # If the tree is empty, return None
+            return  # If the tree is empty, terminate early
 
-        # Step 1: Perform standard BST delete operation
-        if data < self.data:
+        if data == self.data:
+            if not self.left and not self.right:
+                self.data = None
+                return
+            if not self.left and self.right:
+                return self.right
+            elif not self.right and self.left:
+                return self.left
+            else:
+                # Case 2: Node has two children, get the inorder successor (smallest in the right subtree)
+                temp = self.right._min_value_node()
+                self.data = temp.data  # Copy the inorder successor's value to this node
+                self.right = self.right.delete(temp.data)  # Delete the inorder successor
+        elif data < self.data:
             if self.left:
                 self.left = self.left.delete(data)
         elif data > self.data:
             if self.right:
                 self.right = self.right.delete(data)
         else:
-            # Node to be deleted found
-            if not self.left or not self.right:
-                # Case 1: Node has one child or no child
-                temp = self.left if self.left else self.right
-                return temp  # Return the non-null child or None if no child
-            else:
-                # Case 2: Node has two children, get the inorder successor (smallest in the right subtree)
-                temp = self.right._min_value_node()
-                self.data = temp.data  # Copy the inorder successor's value to this node
-                self.right = self.right.delete(temp.data)  # Delete the inorder successor
+            return
 
         # Step 2: Update height and balance factor of this node
         self.balance = self.find_balance()
@@ -202,6 +207,8 @@ class AVL_Tree:
             self.rebalance_helper()
 
         return self
+
+        
     #-----Printing Functions------
     def inorder_print(self):
         '''Prints values from smallest to largest.'''
@@ -262,7 +269,7 @@ class AVL_Tree:
             if self.left:
                 self.left.print_tree(prefix + ("|   " if is_left else "    "), True)
             if self.right:
-                self.right.print_tree(prefix + ("|   " if is_left else "    "), False)
+                self.right.print_tree(prefix + ("|   " if is_left else "    "))
 
 
 if __name__ == "__main__":
@@ -283,6 +290,7 @@ if __name__ == "__main__":
 
     print(f"The balance for our AVL tree is: {avl.find_balance()}")
 
+    print("Deleting 3...")
     avl.delete(3)
     avl.print_tree("")
 
