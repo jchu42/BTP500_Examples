@@ -20,15 +20,22 @@ class AVL_Tree:
         self.right = None
         self.balance = 0    # Use to check the balance factor...
 
+    def copy(self, other):
+        self.data = other.data
+        self.left = other.left
+        self.right = other.right
+        self.balance = other.balance
+
     def reBalance_helper(self):
         """Helper function to handle re-balancing of the tree"""
-        if self.balance < -1:  # Left-heavy :- Need to rotate right.
-            if self.left and self.left.balance > 0:  # Left-Right case :- left child is right heavy
-                self.left = self.left.left_rotate()
+        if self.balance == -2:  # Left-heavy :- Need to rotate right.
+            if self.left and self.left.balance == 1:  # Left-Right case :- left child is right heavy
+                self.left.left_rotate()
+            self.print_tree()
             return self.right_rotate()  # Rotate right
-        elif self.balance > 1:  # Right-heavy :- need to rotate left.
-            if self.right and self.right.balance < 0:  # Right-Left case :- right child is left heavy
-                self.right = self.right.right_rotate()
+        elif self.balance == 2:  # Right-heavy :- need to rotate left.
+            if self.right and self.right.balance == -1:  # Right-Left case :- right child is left heavy
+                self.right.right_rotate()
             return self.left_rotate()   # Rotate Left
         return self
 
@@ -36,31 +43,48 @@ class AVL_Tree:
         """Fixed left rotation implementation"""
         if not self.right:  # if there is no right child, rotation not possible
             return self
-
-        new_root = self.right  # The new root of the subtree will be the right child
-        self.right = new_root.left  # The left child of the new root becomes the right child of the old root
-        new_root.left = self  # The current node becomes the left child of the new root
+        new_left = AVL_Tree()
+        new_left.copy(self)
+        new_left.left = self.left
+        new_left.right = self.right.left
+        self.copy(self.right)
+        self.left = new_left
+        # new_root = self.right  # The new root of the subtree will be the right child
+        # self.right = new_root.left  # The left child of the new root becomes the right child of the old root
+        # new_root.left = self  # The current node becomes the left child of the new root
 
         # Update balance factors, after each rotation
-        self.balance = self.find_balance()
-        new_root.balance = new_root.find_balance()
+        if self.left.balance == 1:
+            self.left.balance = 0
+        if self.left.balance == 2:
+            self.left.balance = 0
+        if self.balance == 0:
+            self.balance = -1
+        if self.balance == 1:
+            self.balance = 0
 
-        return new_root
 
     def right_rotate(self):
         """Fixed right rotation implementation"""
         if not self.left:  # If there is no left child, rotation is not possible
             return self
+        new_right = AVL_Tree()
+        new_right.copy(self)
+        new_right.right = self.right
+        new_right.left = self.left.right
+        self.copy(self.left)
+        self.right = new_right
 
-        new_root = self.left  # The new root of the subtree will be the left child
-        self.left = new_root.right  # The right child of the new root becomes the left child of the old root
-        new_root.right = self  # The current node becomes the right child of the new root
+        # Update balance factors, after each rotation
+        if self.right.balance == -1:
+            self.right.balance = 0
+        if self.right.balance == -2:
+            self.right.balance = 0
+        if self.balance == 0:
+            self.balance = 1
+        if self.balance == -1:
+            self.balance = 0
 
-        # Update balance factors after each rotation
-        self.balance = self.find_balance()
-        new_root.balance = new_root.find_balance()
-
-        return new_root
 
     def insert(self, data):
         """Fixed insert implementation with proper balancing"""
@@ -70,39 +94,41 @@ class AVL_Tree:
 
         # Insert the data into the left or right subtree depending on its value
         if data < self.data:
-            if not self.left:
+            if self.left:
+                self.left.insert(data)
+            else:
                 self.left = AVL_Tree(data)
-            else:
-                self.left = self.left.insert(data)
         elif data > self.data:
-            if not self.right:
-                self.right = AVL_Tree(data)
+            if self.right:
+                self.right.insert(data)
             else:
-                self.right = self.right.insert(data)
+                self.right = AVL_Tree(data)
 
         # Update balance factor
         self.balance = self.find_balance()
 
+        print()
+        self.print_tree()
+
         # Re-balance if necessary (the balance factor exceeds the limit)
         if abs(self.balance) > 1:
-            return self.reBalance_helper()
-
-        return self
+            self.reBalance_helper()
 
     def find_balance(self):
         """Calculate balance factor correctly"""
-        right_height = self.right.find_height() if self.right else 0
-        left_height = self.left.find_height() if self.left else 0
-        return right_height - left_height
+        # right_height = self.right.find_height() if self.right else 0
+        # left_height = self.left.find_height() if self.left else 0
+        # return right_height - left_height
+        return (abs(self.right.balance) + 1 if self.right else 0) - (abs(self.left.balance) + 1 if self.left else 0)
 
-    def find_height(self):
-        """Correctly calculate height"""
-        if not self.data:
-            return 0
+    # def find_height(self):
+    #     """Correctly calculate height"""
+    #     if not self.data:
+    #         return 0
 
-        left_height = self.left.find_height() if self.left else 0
-        right_height = self.right.find_height() if self.right else 0
-        return 1 + max(left_height, right_height)
+    #     left_height = self.left.find_height() if self.left else 0
+    #     right_height = self.right.find_height() if self.right else 0
+    #     return 1 + max(left_height, right_height)
 
     def min_value_node(self):
         """Find minimum value node"""
@@ -193,6 +219,41 @@ class AVL_Tree:
                 the_nodes.put(curr.right)
             print(curr.data, end=" ")
 
+    def breadth_first_print_2(self):
+        dummy = AVL_Tree(None)
+        cur_row = queue.Queue()
+        next_row = queue.Queue()
+        print ('{:>5}'.format(self.data), '{:>2}'.format(self.balance))
+        if self.data:
+            cur_row.put(self)
+        next_row_empty = False
+        while not next_row_empty:
+            next_row_empty = True
+            while not cur_row.empty():
+                element = cur_row.get()
+
+                if element.left:
+                    print ('{:>5}'.format(element.left.data), '{:>2}'.format(element.left.balance), end="  ")
+                    next_row.put(element.left)
+                    if element.left.left or element.left.right:
+                        next_row_empty = False
+                else:
+                    print('{:>5}'.format("_"), '{:>2}'.format("_"), end="  ")
+                    next_row.put(dummy)
+                if element.right:
+                    print ('{:>5}'.format(element.right.data), '{:>2}'.format(element.right.balance), end="  ")
+                    next_row.put(element.right)
+                    if element.right.left or element.right.right:
+                        next_row_empty = False
+                else:
+                    print('{:>5}'.format("_"), '{:>2}'.format("_"), end="  ")
+                    next_row.put(dummy)
+            print()
+            cur_row = next_row
+            next_row = queue.Queue()
+
+
+
     def print_tree(self, prefix="", is_left=False):
         if self.data:
             print(prefix, end="")
@@ -211,22 +272,24 @@ if __name__ == "__main__":
     # Test multiple insertions
     values = [7, 10, 1, 3, -4, 8]
     for val in values:
-        avl = avl.insert(val)  # Important: assign the result back to avl
+        avl.print_tree()
+        avl.insert(val)
 
     print("Initial tree:")
     avl.print_tree()
+    avl.breadth_first_print_2()
 
     # Test search
     print(f"\nIs 10 in the AVL Tree? {avl.search(10)}")
     print(f"Is -1 in the AVL Tree? {avl.search(-1)}")
 
     # Test height and balance
-    print(f"\nTree height: {avl.find_height()}")
+    #print(f"\nTree height: {avl.find_height()}")
     print(f"Root balance: {avl.find_balance()}")
 
     # Test deletion
     print("\nDeleting 7...")
-    avl = avl.delete(7)  # Important: assign the result back to avl
+    avl.delete(7)
     avl.print_tree()
 
     print(f"\nNew root balance: {avl.find_balance()}")
