@@ -1,4 +1,5 @@
 import queue
+import random
 '''
 Augumenting last week's BST such that it will be height balanced,
 thus becoming an AVL tree.
@@ -31,7 +32,6 @@ class AVL_Tree:
         if self.balance == -2:  # Left-heavy :- Need to rotate right.
             if self.left and self.left.balance == 1:  # Left-Right case :- left child is right heavy
                 self.left.left_rotate()
-            self.print_tree()
             return self.right_rotate()  # Rotate right
         elif self.balance == 2:  # Right-heavy :- need to rotate left.
             if self.right and self.right.balance == -1:  # Right-Left case :- right child is left heavy
@@ -49,19 +49,30 @@ class AVL_Tree:
         new_left.right = self.right.left
         self.copy(self.right)
         self.left = new_left
-        # new_root = self.right  # The new root of the subtree will be the right child
-        # self.right = new_root.left  # The left child of the new root becomes the right child of the old root
-        # new_root.left = self  # The current node becomes the left child of the new root
 
-        # Update balance factors, after each rotation
-        if self.left.balance == 1:
-            self.left.balance = 0
-        if self.left.balance == 2:
-            self.left.balance = 0
-        if self.balance == 0:
-            self.balance = -1
-        if self.balance == 1:
+        # help
+        if self.balance == 1 and self.left.balance == 2:
             self.balance = 0
+            self.left.balance = 0
+        elif self.balance == 1 and self.left.balance == 1:
+            self.balance = -1
+            self.left.balance = -1
+        elif self.balance == 0 and self.left.balance == 1:
+            self.balance = -1
+            self.left.balance = 0
+        elif self.balance == 0 and self.left.balance == 2:
+            self.balance = -1
+            self.left.balance = 1
+        elif self.balance == -1 and self.left.balance == 1:
+            self.balance = -2
+            self.left.balance = 0
+        elif self.balance == 2 and self.left.balance == 2:
+            self.balance = 0
+            self.left.balance = -1
+        else:
+            print ("AARG")
+            raise "a"
+            
 
 
     def right_rotate(self):
@@ -75,20 +86,33 @@ class AVL_Tree:
         self.copy(self.left)
         self.right = new_right
 
-        # Update balance factors, after each rotation
-        if self.right.balance == -1:
-            self.right.balance = 0
-        if self.right.balance == -2:
-            self.right.balance = 0
-        if self.balance == 0:
-            self.balance = 1
-        if self.balance == -1:
+        # help
+        if self.balance == -1 and self.right.balance == -2:
             self.balance = 0
+            self.right.balance = 0
+        elif self.balance == -1 and self.right.balance == -1:
+            self.balance = 1
+            self.right.balance = 1
+        elif self.balance == 0 and self.right.balance == -1:
+            self.balance = 1
+            self.right.balance = 0
+        elif self.balance == 0 and self.right.balance == -2:
+            self.balance = 1
+            self.right.balance = -1
+        elif self.balance == 1 and self.right.balance == -1:
+            self.balance = 2
+            self.right.balance = 0
+        elif self.balance == -2 and self.right.balance == -2:
+            self.balance = 0
+            self.right.balance = 1
+        else:
+            print ("AARG")
+            raise "a"
 
 
     def insert(self, data):
         """Fixed insert implementation with proper balancing"""
-        if not self.data:  # If the current node is empty
+        if self.data is None:  # If the current node is empty
             self.data = data
             return self
 
@@ -114,15 +138,14 @@ class AVL_Tree:
                 self.right = AVL_Tree(data)
                 self.balance += 1
 
-        # Update balance factor
-        #self.balance = self.find_balance()
-
         # Re-balance if necessary (the balance factor exceeds the limit)
         if abs(self.balance) > 1:
             self.reBalance_helper()
 
     def find_balance(self):
-        """Calculate balance factor correctly"""
+        """Calculate balance factor (only for delete atm)
+        Time complexity: O(log n)
+        """
         return (self.right.find_height() if self.right else 0) - (self.left.find_height() if self.left else 0)
 
     def find_height(self):
@@ -140,7 +163,7 @@ class AVL_Tree:
 
     def delete(self, data):
         """Fixed delete implementation with proper re-balancing"""
-        if not self.data:
+        if self.data is None:
             return self
 
         if data < self.data:   # If the data is smaller than the current node, delete from the left subtree
@@ -151,9 +174,9 @@ class AVL_Tree:
                 self.right = self.right.delete(data)
         else:
             # Node with one child or no child
-            if not self.left:
+            if self.left is None:
                 return self.right
-            elif not self.right:
+            elif self.right is None:
                 return self.left
 
             # Node with two children
@@ -166,13 +189,13 @@ class AVL_Tree:
 
         # Re-balance if necessary
         if abs(self.balance) > 1:
-            return self.reBalance_helper()
+            self.reBalance_helper()
 
         return self
 
     def search(self, data):
         """Search implementation remains the same"""
-        if not self.data:
+        if self.data is None:
             return False
 
         if self.data == data:
@@ -230,11 +253,11 @@ class AVL_Tree:
         dummy = AVL_Tree(None)
         cur_row = queue.Queue()
         next_row = queue.Queue()
-        print(" " * (overall_spacing*2 * (2**(height - 2)) - overall_spacing), end="") # wacky maths
+        print(" " * int(overall_spacing*2 * (2**(height - 2)) - overall_spacing), end="") # wacky maths
         print ('{:>{max_digits}}'.format(self.data, max_digits=max_digits), '{:>2}'.format(self.balance), end="")
         if self.data:
             cur_row.put(self)
-        next_row_empty = False
+        next_row_empty = not self.left and not self.right
         while not next_row_empty:
             height -= 1
             next_row_empty = True
@@ -268,6 +291,7 @@ class AVL_Tree:
                 print(" " * int(overall_spacing*2 * (2**(height - 1) - 1)), end="")
             cur_row = next_row
             next_row = queue.Queue()
+        print()
 
 
 
@@ -310,3 +334,17 @@ if __name__ == "__main__":
     avl.breadth_first_print_2()
 
     print(f"\nNew root balance: {avl.balance}")
+
+    avl = AVL_Tree()
+    vals = [_ for _ in range(30)]
+    random.shuffle(vals)
+    print ("randomized insertion order:", vals)
+    for val in vals:
+        avl.insert(val)
+    avl.breadth_first_print_2()
+    print("deleting 15")
+    avl.delete(15)
+    avl.breadth_first_print_2()
+    for val in vals:
+        if not avl.search(val):
+            print(val, "not found~")
