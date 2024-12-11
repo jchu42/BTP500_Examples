@@ -95,18 +95,27 @@ class AVL_Tree:
         # Insert the data into the left or right subtree depending on its value
         if data < self.data:
             if self.left:
-                # ???? something to do with updating the balance factor
+                old_bal = self.left.balance
                 self.left.insert(data)
+                new_bal = self.left.balance
+                if old_bal == 0 and abs(new_bal) == 1: # if left side gained a layer
+                    self.balance -= 1
             else:
                 self.left = AVL_Tree(data)
+                self.balance -= 1
         elif data > self.data:
             if self.right:
+                old_bal = self.right.balance
                 self.right.insert(data)
+                new_bal = self.right.balance
+                if old_bal == 0 and abs(new_bal) == 1:
+                    self.balance += 1
             else:
                 self.right = AVL_Tree(data)
+                self.balance += 1
 
         # Update balance factor
-        self.balance = self.find_balance()
+        #self.balance = self.find_balance()
 
         # Re-balance if necessary (the balance factor exceeds the limit)
         if abs(self.balance) > 1:
@@ -293,11 +302,11 @@ if __name__ == "__main__":
 
     # Test height and balance
     #print(f"\nTree height: {avl.find_height()}")
-    print(f"Root balance: {avl.find_balance()}")
+    print(f"Root balance: {avl.balance}")
 
     # Test deletion
     print("\nDeleting 7...")
     avl.delete(7)
     avl.breadth_first_print_2()
 
-    print(f"\nNew root balance: {avl.find_balance()}")
+    print(f"\nNew root balance: {avl.balance}")
