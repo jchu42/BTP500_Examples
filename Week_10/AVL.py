@@ -106,27 +106,21 @@ class AVL_Tree:
                 self.right = AVL_Tree(data)
 
         # Update balance factor
-        new_balance = self.find_balance()
-        self.balance = new_balance
-
-        print()
-        self.print_tree()
+        self.balance = self.find_balance()
 
         # Re-balance if necessary (the balance factor exceeds the limit)
         if abs(self.balance) > 1:
             self.reBalance_helper()
-        
-        return new_balance - self.balance
 
     def find_balance(self):
         """Calculate balance factor correctly"""
-        return (abs(self.right.balance) + 1 if self.right else 0) - (abs(self.left.balance) + 1 if self.left else 0)
+        return (self.right.find_height() if self.right else 0) - (self.left.find_height() if self.left else 0)
 
     def find_height(self):
         """Correctly calculate height
         
         Time complexity: O(logn)"""
-        return 1 + ((self.left.find_height() if self.left else 1) if self.balance < 0 else (self.right.find_height() if self.right else 1))
+        return 1 + ((self.left.find_height() if self.left else 0) if self.balance < 0 else (self.right.find_height() if self.right else 0))
 
     def min_value_node(self):
         """Find minimum value node"""
@@ -220,7 +214,7 @@ class AVL_Tree:
     def breadth_first_print_2(self):
         """tehe xd
         perhaps a helper function for string formatting would've been helpful"""
-        max_digits = 4
+        max_digits = 5
 
         overall_spacing = (int)((max_digits + 3)/2)
         height = self.find_height()
@@ -286,7 +280,6 @@ if __name__ == "__main__":
     # Test multiple insertions
     values = [7, 10, 1, 3, -4, 8]
     for val in values:
-        avl.print_tree()
         avl.insert(val)
 
     print("Initial tree:")
@@ -305,6 +298,6 @@ if __name__ == "__main__":
     # Test deletion
     print("\nDeleting 7...")
     avl.delete(7)
-    avl.print_tree()
+    avl.breadth_first_print_2()
 
     print(f"\nNew root balance: {avl.find_balance()}")
