@@ -95,6 +95,7 @@ class AVL_Tree:
         # Insert the data into the left or right subtree depending on its value
         if data < self.data:
             if self.left:
+                # ???? something to do with updating the balance factor
                 self.left.insert(data)
             else:
                 self.left = AVL_Tree(data)
@@ -105,7 +106,8 @@ class AVL_Tree:
                 self.right = AVL_Tree(data)
 
         # Update balance factor
-        self.balance = self.find_balance()
+        new_balance = self.find_balance()
+        self.balance = new_balance
 
         print()
         self.print_tree()
@@ -113,22 +115,18 @@ class AVL_Tree:
         # Re-balance if necessary (the balance factor exceeds the limit)
         if abs(self.balance) > 1:
             self.reBalance_helper()
+        
+        return new_balance - self.balance
 
     def find_balance(self):
         """Calculate balance factor correctly"""
-        # right_height = self.right.find_height() if self.right else 0
-        # left_height = self.left.find_height() if self.left else 0
-        # return right_height - left_height
         return (abs(self.right.balance) + 1 if self.right else 0) - (abs(self.left.balance) + 1 if self.left else 0)
 
-    # def find_height(self):
-    #     """Correctly calculate height"""
-    #     if not self.data:
-    #         return 0
-
-    #     left_height = self.left.find_height() if self.left else 0
-    #     right_height = self.right.find_height() if self.right else 0
-    #     return 1 + max(left_height, right_height)
+    def find_height(self):
+        """Correctly calculate height
+        
+        Time complexity: O(logn)"""
+        return 1 + ((self.left.find_height() if self.left else 1) if self.balance < 0 else (self.right.find_height() if self.right else 1))
 
     def min_value_node(self):
         """Find minimum value node"""
@@ -220,35 +218,51 @@ class AVL_Tree:
             print(curr.data, end=" ")
 
     def breadth_first_print_2(self):
+        """tehe xd
+        perhaps a helper function for string formatting would've been helpful"""
+        max_digits = 4
+
+        overall_spacing = (int)((max_digits + 3)/2)
+        height = self.find_height()
         dummy = AVL_Tree(None)
         cur_row = queue.Queue()
         next_row = queue.Queue()
-        print ('{:>5}'.format(self.data), '{:>2}'.format(self.balance))
+        print(" " * (overall_spacing*2 * (2**(height - 2)) - overall_spacing), end="") # wacky maths
+        print ('{:>{max_digits}}'.format(self.data, max_digits=max_digits), '{:>2}'.format(self.balance), end="")
         if self.data:
             cur_row.put(self)
         next_row_empty = False
         while not next_row_empty:
+            height -= 1
             next_row_empty = True
+            print()
+            print(" " * int(overall_spacing*2 * (2**(height - 2)) - overall_spacing), end="") # wacky maths
             while not cur_row.empty():
                 element = cur_row.get()
 
                 if element.left:
-                    print ('{:>5}'.format(element.left.data), '{:>2}'.format(element.left.balance), end="  ")
+                    print ('{:>{max_digits}}'.format(element.left.data, max_digits=max_digits), '{:>2}'.format(element.left.balance), end="")
                     next_row.put(element.left)
                     if element.left.left or element.left.right:
                         next_row_empty = False
                 else:
-                    print('{:>5}'.format("_"), '{:>2}'.format("_"), end="  ")
+                    print('{:>{max_digits}}'.format("_", max_digits=max_digits), '{:>2}'.format("_"), end="")
                     next_row.put(dummy)
+                
+                # spacing
+                print(" " * int(overall_spacing*2 * (2**(height - 1) - 1)), end="")
+
                 if element.right:
-                    print ('{:>5}'.format(element.right.data), '{:>2}'.format(element.right.balance), end="  ")
+                    print ('{:>{max_digits}}'.format(element.right.data, max_digits=max_digits), '{:>2}'.format(element.right.balance), end="")
                     next_row.put(element.right)
                     if element.right.left or element.right.right:
                         next_row_empty = False
                 else:
-                    print('{:>5}'.format("_"), '{:>2}'.format("_"), end="  ")
+                    print('{:>{max_digits}}'.format("_", max_digits=max_digits), '{:>2}'.format("_"), end="")
                     next_row.put(dummy)
-            print()
+                    
+                # spacing
+                print(" " * int(overall_spacing*2 * (2**(height - 1) - 1)), end="")
             cur_row = next_row
             next_row = queue.Queue()
 
@@ -276,6 +290,7 @@ if __name__ == "__main__":
         avl.insert(val)
 
     print("Initial tree:")
+    print ("height:", avl.find_height())
     avl.print_tree()
     avl.breadth_first_print_2()
 
